@@ -66,7 +66,7 @@ class Net(nn.Module):
 ### PARAMETERS
 
 VERSION = '01'
-PATH = f'./chinese_classifier_net_{VERSION}.pth'
+PATH = f'./nets/chinese_classifier_net_{VERSION}.pth'
 
 TRAIN = False
 
