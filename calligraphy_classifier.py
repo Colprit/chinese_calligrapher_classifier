@@ -7,13 +7,13 @@ import torchvision as tv
 import csv
 
 
+data_dir = 'data'
+
 transform = tv.transforms.Compose([
     tv.transforms.Grayscale(num_output_channels=1),
     tv.transforms.ToTensor(),
     tv.transforms.Normalize((0.5,), (0.5,))
 ])
-
-data_dir = 'data'
 
 BATCH_SIZE = 8
 
@@ -68,8 +68,6 @@ class Net(nn.Module):
 VERSION = '01'
 PATH = f'./nets/chinese_classifier_net_{VERSION}.pth'
 
-TRAIN = False
-
 PARAMS = {
     'conv1_out_chnls' : 12,     # layer 1: convultional
     'conv1_ker_size' : 5,
@@ -80,14 +78,6 @@ PARAMS = {
     'fc1_lin' : 256,            # layer 5: linear
     'fc2_lin' : 64              # layer 6: linear
 }
-
-# file to record results
-results_dir = 'results.csv'
-if not os.path.exists(results_dir):
-    with open(results_dir, 'w', newline='') as f:
-        writer = csv.writer(f)
-        header = ['version', *PARAMS.keys(), *class_names]
-        writer.writerow(header)
 
 
 net = Net( *PARAMS.values() )
@@ -126,6 +116,8 @@ def train(num_epochs=2):
     print('Training: Finished')
 
 
+TRAIN = False
+
 if TRAIN:
     train()
     torch.save(net.state_dict(), PATH)
@@ -158,6 +150,14 @@ for name, accuracy in accuracies.items():
     print(f'Accuracy of {name} : {accuracy:2.0f}')
 
 # saving results to file
+results_dir = 'results.csv'
+
+if not os.path.exists(results_dir):
+    with open(results_dir, 'w', newline='') as f:
+        writer = csv.writer(f)
+        header = ['version', *PARAMS.keys(), *class_names]
+        writer.writerow(header)
+
 with open(results_dir, 'a', newline='') as f:
     writer = csv.writer(f)
     writer.writerow([VERSION, *PARAMS.values(), *accuracies.values()])
