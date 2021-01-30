@@ -84,7 +84,7 @@ PARAMS = {
 # file to record results
 results_dir = 'results.csv'
 if not os.path.exists(results_dir):
-    with open(results_dir, 'w') as f:
+    with open(results_dir, 'w', newline='') as f:
         writer = csv.writer(f)
         header = ['version', *PARAMS.keys(), *class_names]
         writer.writerow(header)
@@ -158,7 +158,7 @@ for name, accuracy in accuracies.items():
     print(f'Accuracy of {name} : {accuracy:2.0f}')
 
 # saving results to file
-with open(results_dir, 'a') as f:
+with open(results_dir, 'a', newline='') as f:
     writer = csv.writer(f)
     writer.writerow([VERSION, *PARAMS.values(), *accuracies.values()])
 print('Saved to results file')
