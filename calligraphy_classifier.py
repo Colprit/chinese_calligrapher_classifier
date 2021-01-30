@@ -40,16 +40,16 @@ class Net(nn.Module):
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.pool2 = nn.MaxPool2d(4, 4)
         self.fc1 = nn.Linear(16 * 4 * 4, 120)
-        self.fc1 = nn.Linear(120, 84)
-        self.fc1 = nn.Linear(84, len(class_names))
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, len(class_names))
     
     def forward(self, x):
         x = self.pool1(F.relu(self.conv1(x)))
         x = self.pool2(F.relu(self.conv2(x)))
-        x = x.view(16 * 4 * 4)
+        x = x.view(-1, 16 * 4 * 4)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = self.fc2(x)
+        x = self.fc3(x)
         return x
 
 
@@ -66,6 +66,7 @@ net.to(device)
 def train(num_epochs=2):
 
     for epoch in range(num_epochs):
+        print(f'Starting epoch: {epoch}')
 
         running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
@@ -81,8 +82,8 @@ def train(num_epochs=2):
 
             # print statistics
             running_loss += loss.item()
-            if i % 2000 == 1999:
-                print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
+            if i % 1000 == 999:
+                print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 1000:.3f}')
                 running_loss = 0
     
     print('Training: Finished')
