@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torchvision as tv
+import csv
 
 
 transform = tv.transforms.Compose([
@@ -14,33 +15,43 @@ transform = tv.transforms.Compose([
 
 data_dir = 'data'
 
+BATCH_SIZE = 8
+
 trainset = tv.datasets.ImageFolder(os.path.join(data_dir, 'train'),
                                    transform)
 trainloader = torch.utils.data.DataLoader(trainset,
-                                          batch_size=8,
+                                          batch_size=BATCH_SIZE,
                                           shuffle=True,
                                           num_workers=0)
 
 testset = tv.datasets.ImageFolder(os.path.join(data_dir, 'test'),
                                    transform)
 testloader = torch.utils.data.DataLoader(testset,
-                                          batch_size=8,
+                                          batch_size=BATCH_SIZE,
                                           shuffle=True,
                                           num_workers=0)
 
 class_names = trainset.classes
 
-
 class Net(nn.Module):
-    def __init__(self):
+    def __init__(self,
+        conv1_out_chnls,
+        conv1_ker_size,
+        pool1_ker_size,
+        conv2_out_chnls,
+        conv2_ker_size,
+        pool2_ker_size,
+        fc1_lin,
+        fc2_lin
+    ):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(1, 12, 5)
-        self.pool1 = nn.MaxPool2d(3, 3)
-        self.conv2 = nn.Conv2d(12, 30, 5)
-        self.pool2 = nn.MaxPool2d(4, 4)
-        self.fc1 = nn.Linear(30 * 4 * 4, 256)
-        self.fc2 = nn.Linear(256, 64)
-        self.fc3 = nn.Linear(64, len(class_names))
+        self.conv1 = nn.Conv2d(1, conv1_out_chnls, conv1_ker_size)
+        self.pool1 = nn.MaxPool2d(pool1_ker_size)
+        self.conv2 = nn.Conv2d(conv1_out_chnls, conv2_out_chnls, conv2_ker_size)
+        self.pool2 = nn.MaxPool2d(pool2_ker_size)
+        self.fc1 = nn.Linear(conv2_out_chnls * pool2_ker_size**2, fc1_lin)
+        self.fc2 = nn.Linear(fc1_lin, fc2_lin)
+        self.fc3 = nn.Linear(fc2_lin, len(class_names))
     
     def forward(self, x):
         x = self.pool1(F.relu(self.conv1(x)))
@@ -52,7 +63,34 @@ class Net(nn.Module):
         return x
 
 
-net = Net()
+### PARAMETERS
+
+VERSION = '01'
+PATH = f'./chinese_classifier_net_{VERSION}.pth'
+
+TRAIN = False
+
+PARAMS = {
+    'conv1_out_chnls' : 12,     # layer 1: convultional
+    'conv1_ker_size' : 5,
+    'pool1_ker_size' : 3,       # layer 2: max pool
+    'conv2_out_chnls' : 30,     # layer 3: convultional
+    'conv2_ker_size' : 5,
+    'pool2_ker_size' : 4,       # layer 4: max pool
+    'fc1_lin' : 256,            # layer 5: linear
+    'fc2_lin' : 64              # layer 6: linear
+}
+
+# file to record results
+results_dir = 'results.csv'
+if not os.path.exists(results_dir):
+    with open(results_dir, 'w') as f:
+        writer = csv.writer(f)
+        header = ['version', *PARAMS.keys(), *class_names]
+        writer.writerow(header)
+
+
+net = Net( *PARAMS.values() )
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.002, momentum=0.9)
@@ -87,19 +125,18 @@ def train(num_epochs=2):
     
     print('Training: Finished')
 
-VERSION = '01'
-PATH = f'./chinese_classifier_net_{VERSION}.pth'
 
-TRAIN = True
 if TRAIN:
     train()
     torch.save(net.state_dict(), PATH)
 else:
-    net = Net()
+    net = Net(*PARAMS.values())
     net.load_state_dict(torch.load(PATH))
     net.to(device)
 
+
 # Validate
+print('Start validation')
 
 class_correct = {name: 0. for name in class_names}
 class_total =   {name: 0. for name in class_names}
@@ -115,5 +152,13 @@ with torch.no_grad():
                 class_correct[class_names[label]] += correct[i].item()
                 class_total[class_names[label]] += 1
 
-for name in class_names:
-    print(f'Accuracy of {name} : {100 * class_correct[name] / class_total[name] : 2.0f}')
+accuracies = {name : 100 * class_correct[name] / class_total[name] for name in class_names}
+
+for name, accuracy in accuracies.items():
+    print(f'Accuracy of {name} : {accuracy:2.0f}')
+
+# saving results to file
+with open(results_dir, 'a') as f:
+    writer = csv.writer(f)
+    writer.writerow([VERSION, *PARAMS.values(), *accuracies.values()])
+print('Saved to results file')
