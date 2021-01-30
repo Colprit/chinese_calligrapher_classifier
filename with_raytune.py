@@ -167,7 +167,8 @@ def test_accuracy(net, device="cpu"):
 
 def main(num_samples=10, max_num_epochs=10):
     data_dir = os.path.abspath("./data")
-    load_data(data_dir)
+    trainset, _ = load_data(data_dir)
+    class_names = trainset.classes
     config = {
         "l1": tune.sample_from(lambda _: 2 ** np.random.randint(2, 9)),
         "l2": tune.sample_from(lambda _: 2 ** np.random.randint(2, 9)),
@@ -201,7 +202,7 @@ def main(num_samples=10, max_num_epochs=10):
     print("Best trial final validation accuracy: {}".format(
         best_trial.last_result["accuracy"]))
 
-    best_trained_model = Net(best_trial.config["l1"], best_trial.config["l2"])
+    best_trained_model = Net(len(class_names), best_trial.config["l1"], best_trial.config["l2"])
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     best_trained_model.to(device)
 
