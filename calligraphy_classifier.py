@@ -38,9 +38,9 @@ class Net(nn.Module):
         self.pool1 = nn.MaxPool2d(3, 3)
         self.conv2 = nn.Conv2d(12, 30, 5)
         self.pool2 = nn.MaxPool2d(4, 4)
-        self.fc1 = nn.Linear(30 * 4 * 4, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, len(class_names))
+        self.fc1 = nn.Linear(30 * 4 * 4, 256)
+        self.fc2 = nn.Linear(256, 64)
+        self.fc3 = nn.Linear(64, len(class_names))
     
     def forward(self, x):
         x = self.pool1(F.relu(self.conv1(x)))
@@ -87,8 +87,8 @@ def train(num_epochs=2):
     
     print('Training: Finished')
 
-
-PATH = './chinese_classifier_net.pth'
+VERSION = '01'
+PATH = f'./chinese_classifier_net_{VERSION}.pth'
 
 TRAIN = True
 if TRAIN:
