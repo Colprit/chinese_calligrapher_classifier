@@ -1,4 +1,3 @@
-
 import os
 import torch
 import torch.nn as nn
@@ -58,8 +57,8 @@ net = Net()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.002, momentum=0.9)
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-print(device)
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+print(f'using: {device}')
 
 net.to(device)
 
