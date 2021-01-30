@@ -89,18 +89,18 @@ def train(num_epochs=2):
     print('Training: Finished')
 
 
-train(1)
-
 PATH = './chinese_classifier_net.pth'
-torch.save(net.state_dict(), PATH)
 
-
-# Validate
-
-if(False):
+TRAIN = False
+if TRAIN:
+    train(1)
+    torch.save(net.state_dict(), PATH)
+else:
     net = Net()
     net.load_state_dict(torch.load(PATH))
     net.to(device)
+
+# Validate
 
 class_correct = {name: 0. for name in class_names}
 class_total =   {name: 0. for name in class_names}
@@ -112,9 +112,9 @@ with torch.no_grad():
             _, predicted = torch.max(outputs, 1)
             correct = (predicted == labels).squeeze()
             for i in range(len(labels)):
-                label = labels[i]
-                class_correct[label] += correct[i].item()
-                class_total[label] += 1
+                label = labels[i].item()
+                class_correct[class_names[label]] += correct[i].item()
+                class_total[class_names[label]] += 1
 
 for name in class_names:
-    print(f'Accuracy of {name} : {100 * class_correct[name] / class_total[name] : 2d}')
+    print(f'Accuracy of {name} : {100 * class_correct[name] / class_total[name] : 2.0f}')
